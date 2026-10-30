@@ -1622,6 +1622,27 @@
         document.documentElement.classList.toggle('dark', store.theme === 'dark');
         applyThemeBtn();
         document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+        // Three-day return reminder (local HTML version; no account, email, or phone).
+        // This reminder is checked when the user opens/returns to the site.
+        const visitKey = 'focus_last_site_visit_v1';
+        const currentVisit = Date.now();
+        let previousVisit = 0;
+        try { previousVisit = Number(localStorage.getItem(visitKey) || 0); } catch (e) {}
+        if (previousVisit && currentVisit - previousVisit >= 3 * 24 * 60 * 60 * 1000) {
+            const reminderText = currentLang === 'AR'
+                ? 'مرحبا بعودتك! فاتت 3 أيام منذ آخر زيارة. يلا نكملو التقدم ديالك في Focus.'
+                : currentLang === 'EN'
+                    ? 'Welcome back! It has been 3 days since your last visit. Let’s continue your progress in Focus.'
+                    : 'Bon retour ! Cela fait 3 jours depuis ta dernière visite. Continuons tes progrès sur Focus.';
+            setTimeout(() => {
+                toast(reminderText);
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    try { new Notification('Focus', { body: reminderText }); } catch (e) {}
+                }
+            }, 1200);
+        }
+        try { localStorage.setItem(visitKey, String(currentVisit)); } catch (e) {}
         if (!store.user) setTimeout(openNameModal, 600);   // first visit: ask for the name
     });
     </script>
